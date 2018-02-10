@@ -41,6 +41,7 @@ func (h *Hub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		kind, bs, err := conn.ReadMessage()
 		if err != nil {
 			log.Println(conn.RemoteAddr(), err)
+			break
 		}
 
 		if kind == websocket.TextMessage {
@@ -64,7 +65,7 @@ func (h *Hub) OnMessage(message string) {
 
 func (h *Hub) Register(conn *websocket.Conn) {
 	h.connChan <- func(conns map[string]*websocket.Conn) {
-		log.Printf("User %s joined hub! %d connections users", conn.RemoteAddr(), len(conns)+1)
+		log.Printf("User %s joined hub! %d connected users", conn.RemoteAddr(), len(conns)+1)
 		conns[conn.RemoteAddr().String()] = conn
 		conn.WriteMessage(websocket.TextMessage, []byte("welcome!"))
 	}
@@ -72,7 +73,7 @@ func (h *Hub) Register(conn *websocket.Conn) {
 
 func (h *Hub) Deregister(conn *websocket.Conn) {
 	h.connChan <- func(conns map[string]*websocket.Conn) {
-		log.Printf("User %s left hub! %d connections users", conn.RemoteAddr(), len(conns)-1)
+		log.Printf("User %s left hub! %d connected users", conn.RemoteAddr(), len(conns)-1)
 		delete(conns, conn.RemoteAddr().String())
 	}
 }

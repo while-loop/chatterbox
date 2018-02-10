@@ -4,11 +4,9 @@ import (
 	"flag"
 	"log"
 	"net/http"
-
-	_ "github.com/elazarl/go-bindata-assetfs"
-	_ "github.com/jteeuwen/go-bindata"
 )
 
+//go:generate go get github.com/elazarl/go-bindata-assetfs/... github.com/jteeuwen/go-bindata/...
 //go:generate go-bindata-assetfs www/...
 
 var (
