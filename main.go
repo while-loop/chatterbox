@@ -14,6 +14,7 @@ var (
 )
 
 func main() {
+	flag.Parse()
 
 	h := NewHub()
 	handler := &http.ServeMux{}
