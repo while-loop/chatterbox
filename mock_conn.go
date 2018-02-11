@@ -19,7 +19,7 @@ func (m *mockConn) Read(b []byte) (n int, err error) {
 }
 
 func (m *mockConn) Write(b []byte) (n int, err error) {
-	m.Writes = append(m.Writes, string(b))
+	m.Writes = append(m.Writes, string(b)) // keep track of all messages send to Write
 	return len(b), err
 }
 

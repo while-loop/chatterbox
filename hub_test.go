@@ -22,4 +22,5 @@ func TestHub_Register(t *testing.T) {
 
 	wg.Wait()
 	assert.Equal(t, "welcome!", c.Writes[0])
+	assert.Len(t, c.Writes, 1)
 }

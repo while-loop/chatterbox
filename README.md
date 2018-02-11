@@ -1,5 +1,7 @@
-Arbiter
-=======
+Chatterbox
+==========
+
+[![GoDoc Widget]][GoDoc]
 
 Intro to Go and Docker
 
@@ -21,3 +23,7 @@ Author
 ------
 
 Anthony Alves
+
+
+[GoDoc]: https://godoc.org/github.com/while-loop/chatterbox
+[GoDoc Widget]: https://img.shields.io/badge/godoc-reference-blue.svg?style=flat-square

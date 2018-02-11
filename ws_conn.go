@@ -10,9 +10,11 @@ import (
 )
 
 var (
+	// wsUpgrader is Gorilla's websocket upgrade struct with default options
 	wsUpgrader = websocket.Upgrader{}
 )
 
+// WSConn wraps a gorilla websocket.Conn to implement net.Conn
 type WSConn struct {
 	conn   *websocket.Conn
 	sendMu sync.Mutex
@@ -22,6 +24,9 @@ func NewWSConn(conn *websocket.Conn) *WSConn {
 	return &WSConn{conn: conn, sendMu: sync.Mutex{}}
 }
 
+// FromHTTP takes in a hub and manages a client websocket lifecycle
+// for the connected client.
+// This function will also handle any websocket specific functions not needed in Hub (Ping, Pong, etc)
 func FromHTTP(hub *Hub) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		conn, err := wsUpgrader.Upgrade(w, r, nil)
@@ -51,10 +56,13 @@ func FromHTTP(hub *Hub) http.HandlerFunc {
 	}
 }
 
+// Read should not be called by the Hub. All reads are handled asynchronously
 func (w *WSConn) Read(b []byte) (n int, err error) {
 	panic("not used")
 }
 
+// Write sends data to the connected client. Write is protected by a mutex as websocket.Conn writes
+// are not thread-safe.
 func (w *WSConn) Write(b []byte) (n int, err error) {
 	w.sendMu.Lock()
 	defer w.sendMu.Unlock()
