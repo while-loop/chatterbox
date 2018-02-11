@@ -2,53 +2,23 @@ package main
 
 import (
 	"log"
-	"net/http"
-
+	"net"
 	"strings"
 	"time"
-
-	"github.com/gorilla/websocket"
 )
 
-type connFunc func(conns map[string]*websocket.Conn)
-
-var (
-	wsUpgrader = websocket.Upgrader{}
-)
+type connFunc func(conns map[string]net.Conn)
 
 type Hub struct {
-	conns    map[string]*websocket.Conn
+	conns    map[string]net.Conn
 	connChan chan connFunc
 }
 
 func NewHub() *Hub {
 	return &Hub{
-		conns:    map[string]*websocket.Conn{},
+		conns:    map[string]net.Conn{},
 		connChan: make(chan connFunc),
 	}
-}
-
-func (h *Hub) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	log.Println("New request from", r.RemoteAddr)
-	conn, err := wsUpgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println(r.RemoteAddr, err)
-		return
-	}
-
-	h.Register(conn)
-	for {
-		kind, bs, err := conn.ReadMessage()
-		if err != nil {
-			log.Println(conn.RemoteAddr(), err)
-			break
-		}
-
-		if kind == websocket.TextMessage {
-			h.OnMessage(string(bs))
-		}
-	}
-	h.Deregister(conn)
 }
 
 func (h *Hub) OnMessage(message string) {
@@ -56,25 +26,29 @@ func (h *Hub) OnMessage(message string) {
 		message = time.Now().String()
 	}
 
-	h.connChan <- func(conns map[string]*websocket.Conn) {
+	h.Broadcast(message)
+}
+
+func (h *Hub) Broadcast(message string) {
+	h.connChan <- func(conns map[string]net.Conn) {
 		for _, conn := range conns {
-			go conn.WriteMessage(websocket.TextMessage, []byte(message))
+			go conn.Write([]byte(message))
 		}
 	}
 }
 
-func (h *Hub) Register(conn *websocket.Conn) {
-	h.connChan <- func(conns map[string]*websocket.Conn) {
-		log.Printf("User %s joined hub! %d connected users", conn.RemoteAddr(), len(conns)+1)
+func (h *Hub) Register(conn net.Conn) {
+	h.connChan <- func(conns map[string]net.Conn) {
 		conns[conn.RemoteAddr().String()] = conn
-		conn.WriteMessage(websocket.TextMessage, []byte("welcome!"))
+		log.Printf("User %s joined hub! %d connected users", conn.RemoteAddr(), len(conns))
+		conn.Write([]byte("welcome!"))
 	}
 }
 
-func (h *Hub) Deregister(conn *websocket.Conn) {
-	h.connChan <- func(conns map[string]*websocket.Conn) {
-		log.Printf("User %s left hub! %d connected users", conn.RemoteAddr(), len(conns)-1)
+func (h *Hub) Deregister(conn net.Conn) {
+	h.connChan <- func(conns map[string]net.Conn) {
 		delete(conns, conn.RemoteAddr().String())
+		log.Printf("User %s left hub! %d connected users", conn.RemoteAddr(), len(conns))
 	}
 }
 

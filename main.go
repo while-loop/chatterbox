@@ -17,10 +17,11 @@ func main() {
 	flag.Parse()
 
 	h := NewHub()
+	go h.Start()
+
 	handler := &http.ServeMux{}
 	handler.Handle("/", http.FileServer(assetFS()))
-	handler.Handle("/chat", h)
-	go h.Start()
+	handler.Handle("/chat", FromHTTP(h))
 
 	server := http.Server{
 		Handler: handler,
