@@ -10,13 +10,11 @@ import (
 type connFunc func(conns map[string]net.Conn)
 
 type Hub struct {
-	conns    map[string]net.Conn
 	connChan chan connFunc
 }
 
 func NewHub() *Hub {
 	return &Hub{
-		conns:    map[string]net.Conn{},
 		connChan: make(chan connFunc),
 	}
 }
@@ -53,8 +51,10 @@ func (h *Hub) Deregister(conn net.Conn) {
 }
 
 func (h *Hub) Start() error {
+	conns := map[string]net.Conn{}
+
 	for fn := range h.connChan {
-		fn(h.conns)
+		fn(conns)
 	}
 	return nil
 }
